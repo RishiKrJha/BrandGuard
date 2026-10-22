@@ -3,9 +3,13 @@
 import json
 import logging
 import os
+import warnings
 from typing import List, Optional
 
-import google.generativeai as genai
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", category=FutureWarning)
+    import google.generativeai as genai
+
 from backend.app.core.config import settings
 from backend.app.models.audit import AuditResponse
 from backend.app.services.vector_store import VectorStoreService
