@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from backend.app.api.audit import router as audit_router
 from backend.app.api.guidelines import router as guidelines_router
 from backend.app.api.health import router as health_router
 from backend.app.core.config import settings
@@ -35,6 +36,7 @@ app.add_middleware(
 # Include API routers
 app.include_router(health_router)
 app.include_router(guidelines_router, prefix="/api/guidelines")
+app.include_router(audit_router, prefix="/api/audit")
 
 
 if __name__ == "__main__":
