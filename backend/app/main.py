@@ -37,7 +37,8 @@ app.add_middleware(
 )
 
 # Include API routers
-app.include_router(health_router)
+app.include_router(health_router)                              # GET /health  (root, for backward compat)
+app.include_router(health_router, prefix="/api")              # GET /api/health (via apiFetch base path)
 app.include_router(guidelines_router, prefix="/api/guidelines")
 app.include_router(audit_router, prefix="/api/audit")
 
