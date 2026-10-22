@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   ShieldCheck,
   AlertTriangle,
@@ -513,14 +514,29 @@ export function FeedbackPanel({
                 </div>
 
                 <div className="space-y-3">
-                  {violations.map((violation) => (
-                    <ViolationCard
-                      key={violation.id}
-                      violation={violation}
-                      isFixed={fixedViolationIds.has(violation.id)}
-                      onApplyFix={onApplyFix}
-                    />
-                  ))}
+                  <AnimatePresence mode="popLayout" initial={false}>
+                    {violations.map((violation) => (
+                      <motion.div
+                        key={violation.id}
+                        layout
+                        initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{
+                          opacity: 0,
+                          x: 24,
+                          scale: 0.96,
+                          transition: { duration: 0.18, ease: "easeIn" },
+                        }}
+                        transition={{ duration: 0.22, ease: [0.25, 0.1, 0.25, 1] }}
+                      >
+                        <ViolationCard
+                          violation={violation}
+                          isFixed={fixedViolationIds.has(violation.id)}
+                          onApplyFix={onApplyFix}
+                        />
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
                 </div>
               </div>
             )}
