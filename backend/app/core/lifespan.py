@@ -18,6 +18,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """
     logger.info("Initializing %s v%s...", settings.APP_NAME, settings.APP_VERSION)
 
+    # Warn early if GEMINI_API_KEY is missing — auditing will fail at runtime
+    if not settings.GEMINI_API_KEY:
+        logger.warning(
+            "GEMINI_API_KEY is not configured. POST /api/audit/scan will return "
+            "HTTP 500 until a valid key is provided via the GEMINI_API_KEY env var."
+        )
+
     # Ensure persistence directory exists
     os.makedirs(settings.CHROMA_PERSIST_DIRECTORY, exist_ok=True)
 
