@@ -76,23 +76,21 @@ export default function HomePage() {
   // 1-Click Apply Fix handler: updates draftText and marks violation as fixed
   const handleApplyFix = useCallback((violation: Violation) => {
     setDraftText((current) => {
-      // 1. Direct match replacement
-      if (current.includes(violation.flagged_text)) {
-        return current.replace(violation.flagged_text, violation.suggested_fix);
-      }
-      // 2. Trimmed match replacement
-      const trimmedTarget = violation.flagged_text.trim();
-      if (current.includes(trimmedTarget)) {
-        return current.replace(trimmedTarget, violation.suggested_fix.trim());
-      }
-      // 3. Case-insensitive regex fallback
+      const target = violation.flagged_text.trim();
+      if (!target) return current;
+
       try {
-        const regex = new RegExp(escapeRegExp(trimmedTarget), "i");
+        // Global + case-insensitive regex replaces ALL occurrences of the flagged text,
+        // not just the first one (String.replace with a string literal is first-only).
+        const regex = new RegExp(escapeRegExp(target), "gi");
         if (regex.test(current)) {
           return current.replace(regex, violation.suggested_fix);
         }
       } catch {
-        // Fallback silently if regex construction fails
+        // Regex construction failed — fall back to plain string (first occurrence only)
+        if (current.includes(target)) {
+          return current.replace(target, violation.suggested_fix);
+        }
       }
       return current;
     });
