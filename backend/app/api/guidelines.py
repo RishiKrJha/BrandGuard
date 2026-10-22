@@ -62,11 +62,11 @@ async def upload_guideline(
                 detail="No text chunks generated from the document content.",
             )
 
-        chunks_indexed = vector_store.add_chunks(
+        chunks_indexed = await vector_store.async_add_chunks(
             chunks=chunks,
             source=file.filename,
         )
-        total_chunks = vector_store.count_chunks()
+        total_chunks = await vector_store.async_count_chunks()
 
         return GuidelineUploadResponse(
             filename=file.filename,
@@ -103,8 +103,8 @@ async def get_guideline_stats(
     Returns total indexed chunks and current status of the guidelines vector store.
     """
     try:
-        total = vector_store.count_chunks()
-        current_status = "operational" if vector_store.is_alive() else "degraded"
+        total = await vector_store.async_count_chunks()
+        current_status = "operational" if await vector_store.async_is_alive() else "degraded"
         return GuidelineStatsResponse(
             total_chunks=total,
             status=current_status,

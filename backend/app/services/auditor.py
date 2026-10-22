@@ -92,7 +92,7 @@ async def evaluate_draft(
         vector_store = VectorStoreService()
 
     logger.info("Querying ChromaDB for brand guidelines relevant to draft (length: %d chars)", len(draft_text))
-    retrieved_chunks = vector_store.query_rules(query=draft_text, n_results=5)
+    retrieved_chunks = await vector_store.async_query_rules(query=draft_text, n_results=5)
     logger.info("Retrieved %d relevant guideline chunks from ChromaDB", len(retrieved_chunks))
 
     # 2. Configure Gemini API key
