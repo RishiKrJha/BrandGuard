@@ -10,7 +10,11 @@ class AuditRequest(BaseModel):
     draft_text: str = Field(
         ...,
         min_length=1,
-        description="The draft text content to evaluate against brand guidelines",
+        max_length=50_000,
+        description=(
+            "The draft text content to evaluate against brand guidelines. "
+            "Maximum 50,000 characters to stay within Gemini context limits."
+        ),
     )
 
 
