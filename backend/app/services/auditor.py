@@ -91,6 +91,11 @@ def _build_audit_prompt(draft_text: str, retrieved_chunks: List[dict]) -> str:
     else:
         guidelines_section = "NO BRAND GUIDELINE CHUNKS FOUND IN KNOWLEDGE BASE."
 
+    # Sanitize triple-quote sequences in draft_text to prevent prompt injection.
+    # A draft containing '"""' could break out of the delimiter and inject
+    # additional instructions into the system prompt context.
+    safe_draft = draft_text.replace('"""', "'''")
+
     prompt = f"""You are BrandGuard, an enterprise AI brand compliance and coaching specialist.
 Your core philosophy is "coach, not a filter." You empower authors to align their copy with official brand guidelines.
 
@@ -113,7 +118,7 @@ RETRIEVED BRAND GUIDELINES (SOURCE OF TRUTH):
 {guidelines_section}
 
 DRAFT TEXT TO AUDIT:
-\"\"\"{draft_text}\"\"\"
+\"\"\"{safe_draft}\"\"\"
 """
     return prompt
 
