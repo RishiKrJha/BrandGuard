@@ -224,4 +224,7 @@ __marimo__/
 
 # ChromaDB local data
 data/
+chroma_data/
+backend/chroma_data/
+
 

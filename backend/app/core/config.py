@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     GEMINI_MODEL: str = "gemini-1.5-pro"
 
     # ChromaDB Vector Store configuration
-    CHROMA_PERSIST_DIRECTORY: str = "./data/chroma"
+    CHROMA_PERSIST_DIRECTORY: str = "backend/chroma_data"
     CHROMA_COLLECTION_NAME: str = "brand_guidelines"
 
 
