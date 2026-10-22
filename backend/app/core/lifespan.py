@@ -38,7 +38,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     except Exception as exc:
         logger.error("Failed to initialize ChromaDB client: %s", exc)
         app.state.chroma_client = None
-        app.state.vector_store = VectorStoreService()
+        app.state.vector_store = None  # Do NOT fall back to VectorStoreService() — a lazy
+        # re-init would silently create a second client with an unvalidated path,
+        # producing two divergent ChromaDB instances. Requests will receive HTTP 503.
 
     yield
 
