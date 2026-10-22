@@ -1,69 +1,120 @@
-import Image from "next/image";
+import { FileText, Sparkles, ShieldCheck, AlertCircle } from "lucide-react";
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
+    <div className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 flex flex-col gap-6">
+      {/* Workspace Header */}
+      <div className="flex flex-col gap-1 border-b border-neutral-800/80 pb-5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight text-neutral-100">
+            Brand Compliance Workspace
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-sm text-neutral-400">
+            Draft and refine enterprise copy against active brand guidelines in real time.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div className="mt-3 flex items-center gap-2 sm:mt-0">
+          <span className="inline-flex items-center gap-1.5 rounded-md border border-neutral-800 bg-neutral-900 px-2.5 py-1 text-xs text-neutral-300">
+            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+            RAG Grounding: Connected
+          </span>
         </div>
-      </main>
+      </div>
+
+      {/* Dual-Panel Dashboard Container */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 min-h-[580px]">
+        {/* Left Panel: Drafting Workspace */}
+        <section
+          aria-label="Drafting Panel"
+          className="lg:col-span-6 xl:col-span-7 flex flex-col rounded-lg border border-neutral-800 bg-neutral-900/30 overflow-hidden"
+        >
+          {/* Panel Header */}
+          <div className="flex items-center justify-between border-b border-neutral-800 bg-neutral-900/60 px-4 py-3">
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-neutral-400" />
+              <span className="text-xs font-semibold tracking-wide text-neutral-200">
+                Draft Workspace
+              </span>
+            </div>
+            <span className="text-xs text-neutral-500">Plain text / Markdown</span>
+          </div>
+
+          {/* Panel Body: Textarea Placeholder */}
+          <div className="flex-1 p-4 flex flex-col">
+            <div className="flex-1 rounded-md border border-neutral-800 bg-neutral-950/60 p-4 font-mono text-sm text-neutral-400">
+              <p className="text-neutral-500 select-none">
+                {"// Paste or compose draft campaign copy, blog posts, or product announcements here..."}
+              </p>
+            </div>
+
+            {/* Bottom Actions Bar */}
+            <div className="mt-4 flex items-center justify-between pt-2">
+              <span className="text-xs text-neutral-500">
+                0 words &bull; 0 characters
+              </span>
+              <button
+                type="button"
+                className="inline-flex items-center gap-2 rounded-md bg-neutral-100 px-4 py-2 text-xs font-semibold text-neutral-900 transition-colors hover:bg-neutral-200 active:bg-neutral-300"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                <span>Audit Draft</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* Right Panel: AI Coaching & Explainability Feedback */}
+        <section
+          aria-label="Compliance and AI Coaching Feedback"
+          className="lg:col-span-6 xl:col-span-5 flex flex-col rounded-lg border border-neutral-800 bg-neutral-900/30 overflow-hidden"
+        >
+          {/* Panel Header */}
+          <div className="flex items-center justify-between border-b border-neutral-800 bg-neutral-900/60 px-4 py-3">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-emerald-400" />
+              <span className="text-xs font-semibold tracking-wide text-neutral-200">
+                Compliance &amp; Coaching
+              </span>
+            </div>
+            <span className="text-xs text-neutral-500">Coach, not a filter</span>
+          </div>
+
+          {/* Panel Body: Empty / Placeholder State */}
+          <div className="flex-1 p-6 flex flex-col items-center justify-center text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-neutral-800 bg-neutral-900/80 text-neutral-400 mb-4">
+              <AlertCircle className="h-6 w-6 text-neutral-400" />
+            </div>
+            <h3 className="text-sm font-semibold text-neutral-200">
+              Awaiting Draft for Audit
+            </h3>
+            <p className="mt-1.5 max-w-sm text-xs leading-relaxed text-neutral-400">
+              Run an audit to view real-time compliance scoring, guideline citations, and 1-click suggested fixes.
+            </p>
+
+            {/* Visual Guide Card Placeholder */}
+            <div className="mt-6 w-full rounded-md border border-neutral-800/80 bg-neutral-950/40 p-3.5 text-left">
+              <div className="flex items-center justify-between text-[11px] text-neutral-400 mb-2">
+                <span className="font-medium text-neutral-300">Violation Card Structure</span>
+                <span className="text-neutral-500">Preview</span>
+              </div>
+              <ul className="space-y-1.5 text-xs text-neutral-400">
+                <li className="flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-neutral-600" />
+                  <span>Flagged Snippet highlighting</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-neutral-600" />
+                  <span>Direct citation from brand book</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-neutral-600" />
+                  <span>Coaching rationale &amp; 1-Click fix</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+      </div>
     </div>
   );
 }
