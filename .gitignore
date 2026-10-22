@@ -221,3 +221,7 @@ __marimo__/
 
 .agents/
 .DS_Store
+
+# ChromaDB local data
+data/
+

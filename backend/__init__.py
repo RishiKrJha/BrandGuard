@@ -1,0 +1,2 @@
+"""BrandGuard backend root package."""
+
