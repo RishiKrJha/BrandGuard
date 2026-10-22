@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { Database, RefreshCw } from "lucide-react";
 import { EditorPanel, SAMPLE_DRAFTS } from "@/components/EditorPanel";
 import { FeedbackPanel } from "@/components/FeedbackPanel";
@@ -20,6 +20,16 @@ export default function HomePage() {
   );
   const [lastAuditedDraft, setLastAuditedDraft] = useState<string | null>(null);
 
+  // Ref to track and cancel in-flight audit requests
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Cancel any in-flight request when the component unmounts
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, []);
+
   // Derived state (rerender-derived-state-no-effect)
   const isDirty =
     lastAuditedDraft !== null &&
@@ -30,15 +40,25 @@ export default function HomePage() {
     const trimmed = draftText.trim();
     if (!trimmed || isLoading) return;
 
+    // Abort any in-flight request before starting a new one
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await auditApi.scan({ draft_text: trimmed });
+      const response = await auditApi.scan(
+        { draft_text: trimmed },
+        { signal: controller.signal },
+      );
       setAuditResult(response);
       setFixedViolationIds(new Set());
       setLastAuditedDraft(trimmed);
     } catch (err: unknown) {
+      // Ignore intentional request cancellations
+      if (err instanceof DOMException && err.name === "AbortError") return;
       if (err instanceof ApiError) {
         setError(err.detail);
       } else if (err instanceof Error) {
