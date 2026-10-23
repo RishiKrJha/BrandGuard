@@ -388,8 +388,19 @@ export function FeedbackPanel({
         {/* State 1: Loading State */}
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-16 text-center space-y-4">
-            <div className="relative flex h-14 w-14 items-center justify-center rounded-full border border-neutral-800 bg-neutral-900/80">
-              <RefreshCw className="h-6 w-6 text-neutral-300 animate-spin" />
+            {/* Concentric emerald pulse rings while Gemini audits */}
+            <div className="relative flex h-14 w-14 items-center justify-center">
+              <motion.div
+                className="absolute inset-0 rounded-full border border-emerald-500/40"
+                animate={{ scale: [1, 1.4, 1], opacity: [0.6, 0, 0.6] }}
+                transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+              />
+              <motion.div
+                className="absolute inset-2 rounded-full border border-emerald-500/25"
+                animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0, 0.4] }}
+                transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
+              />
+              <RefreshCw className="h-5 w-5 text-emerald-400 animate-spin" />
             </div>
             <div>
               <h3 className="text-sm font-semibold text-neutral-200">
