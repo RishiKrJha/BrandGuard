@@ -109,7 +109,7 @@ def test_violation_and_response_schema():
 async def test_evaluate_draft_with_mocked_gemini():
     """Verify evaluate_draft retrieves guidelines from vector store and invokes Gemini structured output."""
     mock_vector_store = MagicMock(spec=VectorStoreService)
-    mock_vector_store.query_rules.return_value = [
+    mock_vector_store.async_query_rules = AsyncMock(return_value=[
         {
             "text": "Rule 1: Always position BrandGuard as an enterprise solution. Never say 'cheapest'.",
             "distance": 0.15,
@@ -122,7 +122,7 @@ async def test_evaluate_draft_with_mocked_gemini():
             "source": "tone_guide.md",
             "metadata": {"section": "style"},
         },
-    ]
+    ])
 
     mock_gemini_response = MagicMock()
     mock_gemini_response.text = json.dumps(MOCK_AUDIT_RESPONSE_DICT)
@@ -140,7 +140,7 @@ async def test_evaluate_draft_with_mocked_gemini():
         )
 
         # Assert vector store query called with draft text and n_results=5
-        mock_vector_store.query_rules.assert_called_once_with(
+        mock_vector_store.async_query_rules.assert_called_once_with(
             query=SAMPLE_DRAFT_TEXT,
             n_results=5,
         )
@@ -165,7 +165,7 @@ async def test_evaluate_draft_with_mocked_gemini():
 async def test_evaluate_draft_markdown_fenced_gemini_response():
     """Verify evaluate_draft handles raw output wrapped in markdown code fences."""
     mock_vector_store = MagicMock(spec=VectorStoreService)
-    mock_vector_store.query_rules.return_value = []
+    mock_vector_store.async_query_rules = AsyncMock(return_value=[])
 
     mock_gemini_response = MagicMock()
     mock_gemini_response.text = f"```json\n{json.dumps(MOCK_COMPLIANT_RESPONSE_DICT)}\n```"
@@ -259,14 +259,29 @@ def test_api_audit_scan_validation_error_empty_draft():
 
 
 def test_api_audit_scan_gemini_api_error():
-    """Verify POST /api/audit/scan returns HTTP 500 when Gemini API fails."""
+    """Verify POST /api/audit/scan returns HTTP 500 when Gemini API fails with general error."""
     with patch(
         "google.generativeai.GenerativeModel.generate_content_async",
-        side_effect=RuntimeError("Google Gemini API quota exceeded or connection timeout"),
+        side_effect=RuntimeError("Google Gemini connection timeout or internal error"),
     ):
         with TestClient(app) as client:
             response = client.post("/api/audit/scan", json={"draft_text": "Test draft copy."})
             assert response.status_code == 500
             data = response.json()
             assert "Brand audit evaluation failed" in data["detail"]
+
+
+def test_api_audit_scan_gemini_rate_limit_error():
+    """Verify POST /api/audit/scan returns HTTP 429 when Gemini API quota is exhausted."""
+    with patch(
+        "backend.app.services.auditor._RETRY_BASE_DELAY_SECS", 0.001
+    ), patch(
+        "google.generativeai.GenerativeModel.generate_content_async",
+        side_effect=RuntimeError("Google Gemini API quota exceeded (ResourceExhausted 429)"),
+    ):
+        with TestClient(app) as client:
+            response = client.post("/api/audit/scan", json={"draft_text": "Test draft copy."})
+            assert response.status_code == 429
+            data = response.json()
+            assert "Gemini API quota exceeded" in data["detail"]
 
