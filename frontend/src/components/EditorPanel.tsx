@@ -204,12 +204,17 @@ export function EditorPanel({
             onClick={onAudit}
             disabled={isLoading || isDraftEmpty}
             className={cn(
-              "relative inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold tracking-wide transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2 focus:ring-offset-neutral-950",
+              "relative inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold tracking-wide transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2 focus:ring-offset-neutral-950",
               isLoading
                 ? "bg-neutral-800 text-neutral-400 cursor-not-allowed"
                 : isDraftEmpty
                 ? "bg-neutral-800/60 text-neutral-500 cursor-not-allowed border border-neutral-800"
-                : "bg-neutral-100 text-neutral-950 hover:bg-white active:bg-neutral-200 shadow-md shadow-neutral-950/40"
+                : [
+                    "bg-neutral-100 text-neutral-950",
+                    "shadow-md shadow-neutral-950/40",
+                    "hover:bg-white hover:shadow-[0_0_18px_rgba(255,255,255,0.10)]",
+                    "active:bg-neutral-200 active:scale-[0.97]",
+                  ]
             )}
           >
             {isLoading ? (
