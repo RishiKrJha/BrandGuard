@@ -160,7 +160,7 @@ export function EditorPanel({
           disabled={isLoading}
           rows={16}
           placeholder="Paste or write your marketing copy, social post, campaign headline, or product update here...&#10;&#10;Press ⌘ + Enter or click 'Audit Draft' to check tone, claims, and brand compliance against your active guidelines."
-          className="flex-1 w-full resize-none rounded-lg border border-neutral-800/80 bg-neutral-950/70 p-4 font-mono text-sm leading-relaxed text-neutral-100 placeholder:text-neutral-600 transition-colors focus:border-neutral-700 focus:outline-none focus:ring-1 focus:ring-neutral-700 disabled:opacity-70 disabled:cursor-not-allowed selection:bg-neutral-800 selection:text-neutral-100"
+          className="flex-1 w-full resize-none rounded-lg border border-neutral-800/80 bg-neutral-950/70 p-4 font-mono text-sm leading-relaxed text-neutral-100 placeholder:text-neutral-600 transition-colors focus:border-neutral-700 focus:outline-none focus:ring-1 focus:ring-neutral-700 disabled:opacity-70 disabled:cursor-not-allowed selection:bg-emerald-900/50 selection:text-emerald-100"
           spellCheck="false"
         />
       </div>
