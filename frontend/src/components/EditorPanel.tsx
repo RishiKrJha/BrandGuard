@@ -84,7 +84,7 @@ export function EditorPanel({
       )}
     >
       {/* Panel Top Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-800/90 bg-neutral-900/70 px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-800/60 bg-gradient-to-r from-neutral-950 via-neutral-900/80 to-neutral-950 px-4 py-3">
         <div className="flex items-center gap-2.5">
           <div className="flex h-7 w-7 items-center justify-center rounded-md border border-neutral-800 bg-neutral-950 text-neutral-400">
             <FileText className="h-3.5 w-3.5 text-neutral-300" />
