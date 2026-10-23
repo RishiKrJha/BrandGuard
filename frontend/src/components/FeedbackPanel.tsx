@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import React, { useEffect, useState } from "react";
+import { AnimatePresence, animate, motion } from "framer-motion";
 import {
   ShieldCheck,
   AlertTriangle,
@@ -97,15 +97,32 @@ function getSeverityBadge(severity: string) {
 
 /**
  * Circular Score Gauge Component
+ *
+ * On each new score the number counts up from 0 using framer-motion's
+ * animate() utility and the SVG ring draws in simultaneously.
  */
 function ComplianceScoreGauge({ score }: { score: number }) {
   const boundedScore = Math.max(0, Math.min(100, Math.round(score)));
   const meta = getScoreMeta(boundedScore);
 
+  // Animated display score — counts up from 0 whenever the score prop changes
+  const [displayScore, setDisplayScore] = useState(0);
+  useEffect(() => {
+    const controls = animate(0, boundedScore, {
+      duration: 0.9,
+      ease: [0.22, 1, 0.36, 1],
+      onUpdate(v) {
+        setDisplayScore(Math.round(v));
+      },
+    });
+    return controls.stop;
+  }, [boundedScore]);
+
   // SVG circular gauge math: r = 38, circumference ~ 238.76
   const radius = 38;
   const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (boundedScore / 100) * circumference;
+  // Derive strokeDashoffset from displayScore so the ring draws in sync with the number
+  const strokeDashoffset = circumference - (displayScore / 100) * circumference;
 
   return (
     <div className="flex items-center gap-4 rounded-lg border border-neutral-800/90 bg-neutral-950/70 p-4">
@@ -126,7 +143,7 @@ function ComplianceScoreGauge({ score }: { score: number }) {
             strokeWidth="6"
             className="text-neutral-800/80"
           />
-          {/* Animated Progress Ring */}
+          {/* Animated Progress Ring — driven by displayScore so it draws in sync */}
           <circle
             cx="46"
             cy="46"
@@ -137,16 +154,13 @@ function ComplianceScoreGauge({ score }: { score: number }) {
             strokeDasharray={circumference}
             strokeDashoffset={strokeDashoffset}
             strokeLinecap="round"
-            className={cn(
-              meta.strokeClass,
-              "transition-all duration-700 ease-out"
-            )}
+            className={cn(meta.strokeClass)}
           />
         </svg>
-        {/* Score Center Value */}
+        {/* Score Center Value — shows the animated count-up number */}
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
           <span className="text-xl font-bold tracking-tight text-neutral-100 tabular-nums">
-            {boundedScore}
+            {displayScore}
           </span>
           <span className="text-[10px] uppercase font-semibold text-neutral-500">
             Score
