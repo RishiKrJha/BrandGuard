@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { AnimatePresence, animate, motion } from "framer-motion";
 import {
   ShieldCheck,
   AlertTriangle,
@@ -96,15 +97,32 @@ function getSeverityBadge(severity: string) {
 
 /**
  * Circular Score Gauge Component
+ *
+ * On each new score the number counts up from 0 using framer-motion's
+ * animate() utility and the SVG ring draws in simultaneously.
  */
 function ComplianceScoreGauge({ score }: { score: number }) {
   const boundedScore = Math.max(0, Math.min(100, Math.round(score)));
   const meta = getScoreMeta(boundedScore);
 
+  // Animated display score — counts up from 0 whenever the score prop changes
+  const [displayScore, setDisplayScore] = useState(0);
+  useEffect(() => {
+    const controls = animate(0, boundedScore, {
+      duration: 0.9,
+      ease: [0.22, 1, 0.36, 1],
+      onUpdate(v) {
+        setDisplayScore(Math.round(v));
+      },
+    });
+    return controls.stop;
+  }, [boundedScore]);
+
   // SVG circular gauge math: r = 38, circumference ~ 238.76
   const radius = 38;
   const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (boundedScore / 100) * circumference;
+  // Derive strokeDashoffset from displayScore so the ring draws in sync with the number
+  const strokeDashoffset = circumference - (displayScore / 100) * circumference;
 
   return (
     <div className="flex items-center gap-4 rounded-lg border border-neutral-800/90 bg-neutral-950/70 p-4">
@@ -125,7 +143,7 @@ function ComplianceScoreGauge({ score }: { score: number }) {
             strokeWidth="6"
             className="text-neutral-800/80"
           />
-          {/* Animated Progress Ring */}
+          {/* Animated Progress Ring — driven by displayScore so it draws in sync */}
           <circle
             cx="46"
             cy="46"
@@ -136,16 +154,13 @@ function ComplianceScoreGauge({ score }: { score: number }) {
             strokeDasharray={circumference}
             strokeDashoffset={strokeDashoffset}
             strokeLinecap="round"
-            className={cn(
-              meta.strokeClass,
-              "transition-all duration-700 ease-out"
-            )}
+            className={cn(meta.strokeClass)}
           />
         </svg>
-        {/* Score Center Value */}
+        {/* Score Center Value — shows the animated count-up number */}
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
           <span className="text-xl font-bold tracking-tight text-neutral-100 tabular-nums">
-            {boundedScore}
+            {displayScore}
           </span>
           <span className="text-[10px] uppercase font-semibold text-neutral-500">
             Score
@@ -358,7 +373,7 @@ export function FeedbackPanel({
       )}
     >
       {/* Panel Top Bar */}
-      <div className="flex items-center justify-between border-b border-neutral-800/90 bg-neutral-900/70 px-4 py-3">
+      <div className="flex items-center justify-between border-b border-neutral-800/60 bg-gradient-to-r from-neutral-950 via-neutral-900/80 to-neutral-950 px-4 py-3">
         <div className="flex items-center gap-2.5">
           <div className="flex h-7 w-7 items-center justify-center rounded-md border border-neutral-800 bg-neutral-950 text-emerald-400">
             <ShieldCheck className="h-3.5 w-3.5" />
@@ -387,8 +402,19 @@ export function FeedbackPanel({
         {/* State 1: Loading State */}
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-16 text-center space-y-4">
-            <div className="relative flex h-14 w-14 items-center justify-center rounded-full border border-neutral-800 bg-neutral-900/80">
-              <RefreshCw className="h-6 w-6 text-neutral-300 animate-spin" />
+            {/* Concentric emerald pulse rings while Gemini audits */}
+            <div className="relative flex h-14 w-14 items-center justify-center">
+              <motion.div
+                className="absolute inset-0 rounded-full border border-emerald-500/40"
+                animate={{ scale: [1, 1.4, 1], opacity: [0.6, 0, 0.6] }}
+                transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+              />
+              <motion.div
+                className="absolute inset-2 rounded-full border border-emerald-500/25"
+                animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0, 0.4] }}
+                transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
+              />
+              <RefreshCw className="h-5 w-5 text-emerald-400 animate-spin" />
             </div>
             <div>
               <h3 className="text-sm font-semibold text-neutral-200">
@@ -513,14 +539,29 @@ export function FeedbackPanel({
                 </div>
 
                 <div className="space-y-3">
-                  {violations.map((violation) => (
-                    <ViolationCard
-                      key={violation.id}
-                      violation={violation}
-                      isFixed={fixedViolationIds.has(violation.id)}
-                      onApplyFix={onApplyFix}
-                    />
-                  ))}
+                  <AnimatePresence mode="popLayout" initial={false}>
+                    {violations.map((violation) => (
+                      <motion.div
+                        key={violation.id}
+                        layout
+                        initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{
+                          opacity: 0,
+                          x: 24,
+                          scale: 0.96,
+                          transition: { duration: 0.18, ease: "easeIn" },
+                        }}
+                        transition={{ duration: 0.22, ease: [0.25, 0.1, 0.25, 1] }}
+                      >
+                        <ViolationCard
+                          violation={violation}
+                          isFixed={fixedViolationIds.has(violation.id)}
+                          onApplyFix={onApplyFix}
+                        />
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
                 </div>
               </div>
             )}

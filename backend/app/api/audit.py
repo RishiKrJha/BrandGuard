@@ -44,10 +44,22 @@ async def scan_draft(
             status_code=status_code,
             detail=str(val_err),
         )
+    except RuntimeError as exc:
+        detail = str(exc)
+        if detail.startswith("RATE_LIMIT:"):
+            # Surface Gemini quota exhaustion as HTTP 429 so the client can back off
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=detail.removeprefix("RATE_LIMIT:").strip(),
+            )
+        logger.error("Error executing draft audit scan: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Brand audit evaluation failed: {detail}",
+        )
     except Exception as exc:
         logger.error("Error executing draft audit scan: %s", exc, exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Brand audit evaluation failed: {str(exc)}",
         )
-

@@ -18,6 +18,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """
     logger.info("Initializing %s v%s...", settings.APP_NAME, settings.APP_VERSION)
 
+    # Warn early if GEMINI_API_KEY is missing — auditing will fail at runtime
+    if not settings.GEMINI_API_KEY:
+        logger.warning(
+            "GEMINI_API_KEY is not configured. POST /api/audit/scan will return "
+            "HTTP 500 until a valid key is provided via the GEMINI_API_KEY env var."
+        )
+
     # Ensure persistence directory exists
     os.makedirs(settings.CHROMA_PERSIST_DIRECTORY, exist_ok=True)
 
@@ -31,7 +38,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     except Exception as exc:
         logger.error("Failed to initialize ChromaDB client: %s", exc)
         app.state.chroma_client = None
-        app.state.vector_store = VectorStoreService()
+        app.state.vector_store = None  # Do NOT fall back to VectorStoreService() — a lazy
+        # re-init would silently create a second client with an unvalidated path,
+        # producing two divergent ChromaDB instances. Requests will receive HTTP 503.
 
     yield
 

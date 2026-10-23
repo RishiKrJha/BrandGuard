@@ -84,7 +84,7 @@ export function EditorPanel({
       )}
     >
       {/* Panel Top Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-800/90 bg-neutral-900/70 px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-800/60 bg-gradient-to-r from-neutral-950 via-neutral-900/80 to-neutral-950 px-4 py-3">
         <div className="flex items-center gap-2.5">
           <div className="flex h-7 w-7 items-center justify-center rounded-md border border-neutral-800 bg-neutral-950 text-neutral-400">
             <FileText className="h-3.5 w-3.5 text-neutral-300" />
@@ -160,7 +160,7 @@ export function EditorPanel({
           disabled={isLoading}
           rows={16}
           placeholder="Paste or write your marketing copy, social post, campaign headline, or product update here...&#10;&#10;Press ⌘ + Enter or click 'Audit Draft' to check tone, claims, and brand compliance against your active guidelines."
-          className="flex-1 w-full resize-none rounded-lg border border-neutral-800/80 bg-neutral-950/70 p-4 font-mono text-sm leading-relaxed text-neutral-100 placeholder:text-neutral-600 transition-colors focus:border-neutral-700 focus:outline-none focus:ring-1 focus:ring-neutral-700 disabled:opacity-70 disabled:cursor-not-allowed selection:bg-neutral-800 selection:text-neutral-100"
+          className="flex-1 w-full resize-none rounded-lg border border-neutral-800/80 bg-neutral-950/70 p-4 font-mono text-sm leading-relaxed text-neutral-100 placeholder:text-neutral-600 transition-colors focus:border-neutral-700 focus:outline-none focus:ring-1 focus:ring-neutral-700 disabled:opacity-70 disabled:cursor-not-allowed selection:bg-emerald-900/50 selection:text-emerald-100"
           spellCheck="false"
         />
       </div>
@@ -204,12 +204,17 @@ export function EditorPanel({
             onClick={onAudit}
             disabled={isLoading || isDraftEmpty}
             className={cn(
-              "relative inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold tracking-wide transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2 focus:ring-offset-neutral-950",
+              "relative inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold tracking-wide transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2 focus:ring-offset-neutral-950",
               isLoading
                 ? "bg-neutral-800 text-neutral-400 cursor-not-allowed"
                 : isDraftEmpty
                 ? "bg-neutral-800/60 text-neutral-500 cursor-not-allowed border border-neutral-800"
-                : "bg-neutral-100 text-neutral-950 hover:bg-white active:bg-neutral-200 shadow-md shadow-neutral-950/40"
+                : [
+                    "bg-neutral-100 text-neutral-950",
+                    "shadow-md shadow-neutral-950/40",
+                    "hover:bg-white hover:shadow-[0_0_18px_rgba(255,255,255,0.10)]",
+                    "active:bg-neutral-200 active:scale-[0.97]",
+                  ]
             )}
           >
             {isLoading ? (

@@ -27,14 +27,18 @@ app = FastAPI(
 # CORS Middleware for Next.js frontend communication
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 # Include API routers
-app.include_router(health_router)
+app.include_router(health_router)                              # GET /health  (root, for backward compat)
+app.include_router(health_router, prefix="/api")              # GET /api/health (via apiFetch base path)
 app.include_router(guidelines_router, prefix="/api/guidelines")
 app.include_router(audit_router, prefix="/api/audit")
 

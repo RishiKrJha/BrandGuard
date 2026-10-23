@@ -1,7 +1,14 @@
 """Pydantic v2 schemas for the AI Brand Audit service."""
 
-from typing import List
+from typing import List, Literal
 from pydantic import BaseModel, Field, field_validator
+
+# Constrained literal types for Violation fields.
+# A pre-validation normalizer lowercases and strips the raw string from Gemini
+# so typos like 'CRITICAL' or ' High ' are coerced to the canonical form rather
+# than falling through to the default badge in the UI.
+SeverityLevel = Literal["low", "medium", "high", "critical"]
+ViolationType = Literal["tone", "typography", "terminology", "color", "logo", "claims"]
 
 
 class AuditRequest(BaseModel):
@@ -10,7 +17,11 @@ class AuditRequest(BaseModel):
     draft_text: str = Field(
         ...,
         min_length=1,
-        description="The draft text content to evaluate against brand guidelines",
+        max_length=50_000,
+        description=(
+            "The draft text content to evaluate against brand guidelines. "
+            "Maximum 50,000 characters to stay within Gemini context limits."
+        ),
     )
 
 
@@ -21,11 +32,11 @@ class Violation(BaseModel):
         ...,
         description="Unique identifier for the violation (e.g., viol-1)",
     )
-    type: str = Field(
+    type: ViolationType = Field(
         ...,
-        description="Category of guideline violation (e.g., tone, typography, color, claims, terminology)",
+        description="Category of guideline violation (tone, typography, terminology, color, logo, claims)",
     )
-    severity: str = Field(
+    severity: SeverityLevel = Field(
         ...,
         description="Impact severity level: low, medium, high, or critical",
     )
@@ -45,6 +56,14 @@ class Violation(BaseModel):
         ...,
         description="Actionable 1-click replacement text resolving the violation",
     )
+
+    @field_validator("severity", "type", mode="before")
+    @classmethod
+    def normalize_string_field(cls, v: object) -> str:
+        """Coerce Gemini output to lowercase so 'CRITICAL' and 'High' map correctly."""
+        if isinstance(v, str):
+            return v.strip().lower()
+        return v  # type: ignore[return-value]
 
 
 class AuditResponse(BaseModel):

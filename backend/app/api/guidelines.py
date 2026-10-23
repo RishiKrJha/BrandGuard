@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["guidelines"])
 
 ALLOWED_EXTENSIONS = {".pdf", ".txt", ".md"}
+MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB
 
 
 @router.post(
@@ -48,6 +49,15 @@ async def upload_guideline(
                 detail="Uploaded file is empty.",
             )
 
+        if len(content) > MAX_FILE_SIZE_BYTES:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=(
+                    f"File size ({len(content) // 1024} KB) exceeds the maximum allowed "
+                    f"size of {MAX_FILE_SIZE_BYTES // (1024 * 1024)} MB."
+                ),
+            )
+
         extracted_text = extract_text(content, filename=file.filename)
         if not extracted_text.strip():
             raise HTTPException(
@@ -62,11 +72,11 @@ async def upload_guideline(
                 detail="No text chunks generated from the document content.",
             )
 
-        chunks_indexed = vector_store.add_chunks(
+        chunks_indexed = await vector_store.async_add_chunks(
             chunks=chunks,
             source=file.filename,
         )
-        total_chunks = vector_store.count_chunks()
+        total_chunks = await vector_store.async_count_chunks()
 
         return GuidelineUploadResponse(
             filename=file.filename,
@@ -103,8 +113,8 @@ async def get_guideline_stats(
     Returns total indexed chunks and current status of the guidelines vector store.
     """
     try:
-        total = vector_store.count_chunks()
-        current_status = "operational" if vector_store.is_alive() else "degraded"
+        total = await vector_store.async_count_chunks()
+        current_status = "operational" if await vector_store.async_is_alive() else "degraded"
         return GuidelineStatsResponse(
             total_chunks=total,
             status=current_status,

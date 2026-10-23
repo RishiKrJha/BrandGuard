@@ -1,5 +1,6 @@
 """Vector store service wrapping ChromaDB for brand guidelines storage and retrieval."""
 
+import asyncio
 import logging
 import os
 from pathlib import Path
@@ -165,3 +166,33 @@ class VectorStoreService:
         except Exception as exc:
             logger.debug("Reset: collection '%s' did not exist or failed to delete: %s", self.collection_name, exc)
         self._collection = None
+
+    # ------------------------------------------------------------------
+    # Async wrappers — offload blocking ChromaDB calls to a thread pool
+    # so they never block the uvicorn async event loop.
+    # ------------------------------------------------------------------
+
+    async def async_add_chunks(
+        self,
+        chunks: List[str],
+        source: str,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> int:
+        """Thread-safe async wrapper around :meth:`add_chunks`."""
+        return await asyncio.to_thread(self.add_chunks, chunks, source, metadata)
+
+    async def async_query_rules(
+        self,
+        query: str,
+        n_results: int = 5,
+    ) -> List[Dict[str, Any]]:
+        """Thread-safe async wrapper around :meth:`query_rules`."""
+        return await asyncio.to_thread(self.query_rules, query, n_results)
+
+    async def async_count_chunks(self) -> int:
+        """Thread-safe async wrapper around :meth:`count_chunks`."""
+        return await asyncio.to_thread(self.count_chunks)
+
+    async def async_is_alive(self) -> bool:
+        """Thread-safe async wrapper around :meth:`is_alive`."""
+        return await asyncio.to_thread(self.is_alive)

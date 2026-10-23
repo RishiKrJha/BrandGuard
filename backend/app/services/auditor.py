@@ -1,5 +1,6 @@
 """AI Brand Audit Service evaluating draft content against vector store brand guidelines."""
 
+import asyncio
 import json
 import logging
 import os
@@ -15,6 +16,54 @@ from backend.app.models.audit import AuditResponse
 from backend.app.services.vector_store import VectorStoreService
 
 logger = logging.getLogger(__name__)
+
+_GEMINI_RATE_LIMIT_SIGNALS = ("429", "quota", "resource_exhausted", "rate limit")
+_MAX_RETRIES = 2
+_RETRY_BASE_DELAY_SECS = 3.0
+
+
+def _is_rate_limit_error(exc: Exception) -> bool:
+    """Return True if the exception indicates a Gemini API quota / rate-limit error."""
+    msg = str(exc).lower()
+    return any(signal in msg for signal in _GEMINI_RATE_LIMIT_SIGNALS)
+
+
+async def _call_gemini_with_retry(model, prompt: str) -> str:
+    """
+    Invoke Gemini generate_content_async with exponential back-off on 429 errors.
+
+    Retries up to _MAX_RETRIES times before re-raising as a tagged RuntimeError
+    so the API layer can return HTTP 429 instead of a generic 500.
+
+    Returns:
+        Raw text from the Gemini response.
+
+    Raises:
+        RuntimeError: Tagged with 'RATE_LIMIT:' prefix on quota exhaustion,
+                      or plain message for other API failures.
+    """
+    for attempt in range(_MAX_RETRIES + 1):
+        try:
+            response = await model.generate_content_async(prompt)
+            return response.text or "{}"
+        except Exception as exc:
+            if _is_rate_limit_error(exc):
+                if attempt < _MAX_RETRIES:
+                    wait = _RETRY_BASE_DELAY_SECS * (2 ** attempt)
+                    logger.warning(
+                        "Gemini rate-limit (429) hit. Retrying in %.1fs (attempt %d/%d).",
+                        wait, attempt + 1, _MAX_RETRIES,
+                    )
+                    await asyncio.sleep(wait)
+                    continue
+                logger.error("Gemini rate-limit exhausted after %d retries: %s", _MAX_RETRIES, exc)
+                raise RuntimeError(
+                    f"RATE_LIMIT: Gemini API quota exceeded. Please retry in a few seconds."
+                ) from exc
+            logger.error("Gemini API call failed: %s", exc, exc_info=True)
+            raise RuntimeError(f"Gemini API generation error: {exc}") from exc
+    # Unreachable, satisfies type checkers
+    raise RuntimeError("Gemini: unexpected retry loop exit")
 
 
 def _clean_json_markdown(raw_text: str) -> str:
@@ -42,6 +91,11 @@ def _build_audit_prompt(draft_text: str, retrieved_chunks: List[dict]) -> str:
     else:
         guidelines_section = "NO BRAND GUIDELINE CHUNKS FOUND IN KNOWLEDGE BASE."
 
+    # Sanitize triple-quote sequences in draft_text to prevent prompt injection.
+    # A draft containing '"""' could break out of the delimiter and inject
+    # additional instructions into the system prompt context.
+    safe_draft = draft_text.replace('"""', "'''")
+
     prompt = f"""You are BrandGuard, an enterprise AI brand compliance and coaching specialist.
 Your core philosophy is "coach, not a filter." You empower authors to align their copy with official brand guidelines.
 
@@ -64,7 +118,7 @@ RETRIEVED BRAND GUIDELINES (SOURCE OF TRUTH):
 {guidelines_section}
 
 DRAFT TEXT TO AUDIT:
-\"\"\"{draft_text}\"\"\"
+\"\"\"{safe_draft}\"\"\"
 """
     return prompt
 
@@ -92,7 +146,7 @@ async def evaluate_draft(
         vector_store = VectorStoreService()
 
     logger.info("Querying ChromaDB for brand guidelines relevant to draft (length: %d chars)", len(draft_text))
-    retrieved_chunks = vector_store.query_rules(query=draft_text, n_results=5)
+    retrieved_chunks = await vector_store.async_query_rules(query=draft_text, n_results=5)
     logger.info("Retrieved %d relevant guideline chunks from ChromaDB", len(retrieved_chunks))
 
     # 2. Configure Gemini API key
@@ -120,13 +174,8 @@ async def evaluate_draft(
         ),
     )
 
-    try:
-        response = await model.generate_content_async(prompt)
-    except Exception as exc:
-        logger.error("Gemini API call failed: %s", exc, exc_info=True)
-        raise RuntimeError(f"Gemini API generation error: {exc}") from exc
-
-    raw_text = response.text or "{}"
+    # Invoke Gemini with exponential back-off on 429 rate-limit errors.
+    raw_text = await _call_gemini_with_retry(model, prompt)
     clean_text = _clean_json_markdown(raw_text)
 
     try:
@@ -145,4 +194,3 @@ async def evaluate_draft(
         except Exception:
             logger.error("Failed to parse Gemini output into AuditResponse: %s. Raw output: %s", parse_exc, raw_text)
             raise ValueError(f"Failed to validate response against AuditResponse schema: {parse_exc}") from parse_exc
-

@@ -137,14 +137,14 @@ export const guidelinesApi = {
 
 /**
  * Health API services
+ *
+ * Uses apiFetch so the base URL is driven by NEXT_PUBLIC_API_URL, not a
+ * hardcoded localhost — prevents silent failures in staging / production.
+ * The backend mounts /health at the root (not under /api), so the path
+ * is constructed relative to the API base root.
  */
 export const healthApi = {
   check: (init?: RequestInit): Promise<HealthResponse> =>
-    // Backend health endpoint is mounted at root /health or /api/health
-    fetch("http://localhost:8000/health", init)
-      .then((res) => res.json() as Promise<HealthResponse>)
-      .catch(() =>
-        apiFetch<HealthResponse>("/health", { method: "GET", ...init })
-      ),
+    apiFetch<HealthResponse>("/health", { method: "GET", ...init }),
 };
 
