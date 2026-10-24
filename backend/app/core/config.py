@@ -29,6 +29,12 @@ class Settings(BaseSettings):
     CHROMA_PERSIST_DIRECTORY: str = "backend/chroma_data"
     CHROMA_COLLECTION_NAME: str = "brand_guidelines"
 
+    # CORS configuration (comma-separated origins)
+    ALLOWED_ORIGINS: str = Field(
+        default="http://localhost:3000,http://127.0.0.1:3000",
+        description="Comma-separated allowed origins for CORS",
+    )
+
 
 settings = Settings()
 

@@ -3,8 +3,25 @@
  * Typed fetch requests for FastAPI backend endpoints.
  */
 
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+/**
+ * Resolves and normalizes the base URL for backend API requests.
+ * Strips trailing slashes and ensures the `/api` route prefix is always present,
+ * regardless of whether NEXT_PUBLIC_API_URL is configured as:
+ * - "https://your-service.onrender.com"
+ * - "https://your-service.onrender.com/"
+ * - "https://your-service.onrender.com/api"
+ * - or defaults to local dev "http://localhost:8000/api".
+ */
+export function getApiBaseUrl(): string {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (!envUrl) {
+    return "http://localhost:8000/api";
+  }
+  const cleanUrl = envUrl.replace(/\/+$/, "");
+  return cleanUrl.endsWith("/api") ? cleanUrl : `${cleanUrl}/api`;
+}
+
+export const API_BASE_URL = getApiBaseUrl();
 
 export interface Violation {
   id: string;
