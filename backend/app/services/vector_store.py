@@ -158,6 +158,37 @@ class VectorStoreService:
             logger.error("Failed to retrieve chunk count: %s", exc)
             return 0
 
+    def get_sources(self) -> List[str]:
+        """Return a sorted list of unique source document names indexed in the collection."""
+        try:
+            if self.count_chunks() == 0:
+                return []
+            result = self.collection.get(include=["metadatas"])
+            metas = result.get("metadatas") or []
+            sources = sorted(list(set(m.get("source") for m in metas if m and "source" in m)))
+            return sources
+        except Exception as exc:
+            logger.error("Failed to retrieve indexed sources: %s", exc)
+            return []
+
+    def delete_by_source(self, source: str) -> int:
+        """
+        Delete all chunks indexed under a specific source document identifier.
+
+        Args:
+            source: Source identifier (e.g. filename).
+
+        Returns:
+            Remaining chunk count in the collection.
+        """
+        try:
+            self.collection.delete(where={"source": source})
+            logger.info("Deleted chunks for source '%s' in collection '%s'", source, self.collection_name)
+            return self.count_chunks()
+        except Exception as exc:
+            logger.error("Failed to delete chunks for source '%s': %s", source, exc)
+            raise
+
     def reset(self) -> None:
         """Reset the collection for testing and re-indexing."""
         try:
@@ -192,6 +223,18 @@ class VectorStoreService:
     async def async_count_chunks(self) -> int:
         """Thread-safe async wrapper around :meth:`count_chunks`."""
         return await asyncio.to_thread(self.count_chunks)
+
+    async def async_get_sources(self) -> List[str]:
+        """Thread-safe async wrapper around :meth:`get_sources`."""
+        return await asyncio.to_thread(self.get_sources)
+
+    async def async_delete_by_source(self, source: str) -> int:
+        """Thread-safe async wrapper around :meth:`delete_by_source`."""
+        return await asyncio.to_thread(self.delete_by_source, source)
+
+    async def async_reset(self) -> None:
+        """Thread-safe async wrapper around :meth:`reset`."""
+        await asyncio.to_thread(self.reset)
 
     async def async_is_alive(self) -> bool:
         """Thread-safe async wrapper around :meth:`is_alive`."""

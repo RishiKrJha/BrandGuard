@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 from pydantic import BaseModel, Field
 
 
@@ -24,6 +24,14 @@ class GuidelineStatsResponse(BaseModel):
 
     total_chunks: int = Field(..., description="Total indexed chunks in vector store")
     status: str = Field(..., description="Vector store health/operational status")
+    sources: List[str] = Field(default_factory=list, description="List of unique indexed guideline documents")
+
+
+class GuidelineResetResponse(BaseModel):
+    """Schema for guideline store reset and deletion response."""
+
+    message: str = Field(..., description="Status message detailing operation result")
+    total_chunks: int = Field(default=0, description="Total chunks remaining in vector store")
 
 
 class GuidelineRuleMatch(BaseModel):

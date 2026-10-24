@@ -271,4 +271,51 @@ def test_get_guidelines_stats_via_api():
         assert "total_chunks" in data
         assert isinstance(data["total_chunks"], int)
         assert data["status"] in ["operational", "ready", "degraded"]
+        assert "sources" in data
+
+
+def test_delete_guideline_file_via_api():
+    """Verify deleting a specific guideline document removes its chunks."""
+    with TestClient(app) as client:
+        # Upload a guideline
+        upload_resp = client.post(
+            "/api/guidelines/upload",
+            files={"file": ("to_delete.txt", b"Brand rule to be deleted immediately.", "text/plain")},
+        )
+        assert upload_resp.status_code == 200
+
+        # Delete the guideline
+        delete_resp = client.delete("/api/guidelines/file/to_delete.txt")
+        assert delete_resp.status_code == 200
+        del_data = delete_resp.json()
+        assert "deleted" in del_data["message"].lower()
+
+        # Check stats to verify source is no longer present
+        stats_resp = client.get("/api/guidelines/stats")
+        assert stats_resp.status_code == 200
+        assert "to_delete.txt" not in stats_resp.json()["sources"]
+
+
+def test_reset_guidelines_via_api():
+    """Verify DELETE /api/guidelines/reset wipes all chunks and resets vector store."""
+    with TestClient(app) as client:
+        # Upload a test guideline
+        client.post(
+            "/api/guidelines/upload",
+            files={"file": ("reset_test.txt", b"Rule before complete reset.", "text/plain")},
+        )
+
+        # Call reset endpoint
+        response = client.delete("/api/guidelines/reset")
+        assert response.status_code == 200
+        data = response.json()
+        assert "reset" in data["message"].lower()
+        assert data["total_chunks"] == 0
+
+        # Verify stats returns 0 chunks and empty sources
+        stats_resp = client.get("/api/guidelines/stats")
+        assert stats_resp.status_code == 200
+        assert stats_resp.json()["total_chunks"] == 0
+        assert stats_resp.json()["sources"] == []
+
 

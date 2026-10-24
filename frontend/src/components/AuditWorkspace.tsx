@@ -10,10 +10,18 @@
  */
 
 import React, { useState, useCallback, useRef, useEffect } from "react";
-import { Database, RefreshCw } from "lucide-react";
+import { Database, RefreshCw, SlidersHorizontal } from "lucide-react";
 import { EditorPanel, SAMPLE_DRAFTS } from "@/components/EditorPanel";
 import { FeedbackPanel } from "@/components/FeedbackPanel";
-import { auditApi, type AuditResponse, type Violation, ApiError } from "@/lib/api";
+import { GuidelineModal } from "@/components/GuidelineModal";
+import {
+  auditApi,
+  guidelinesApi,
+  type AuditResponse,
+  type Violation,
+  type GuidelineStatsResponse,
+  ApiError,
+} from "@/lib/api";
 
 function escapeRegExp(string: string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -28,16 +36,48 @@ export function AuditWorkspace() {
     () => new Set()
   );
   const [lastAuditedDraft, setLastAuditedDraft] = useState<string | null>(null);
+  const [isGuidelineModalOpen, setIsGuidelineModalOpen] = useState<boolean>(false);
+  const [guidelineStats, setGuidelineStats] = useState<GuidelineStatsResponse | null>(null);
 
   // Ref to track and cancel in-flight audit requests
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Cancel any in-flight request when the component unmounts
+  const fetchGuidelineStats = useCallback(async () => {
+    try {
+      const stats = await guidelinesApi.getStats();
+      setGuidelineStats(stats);
+    } catch {
+      // Backend may be booting
+    }
+  }, []);
+
+  // Fetch initial stats and cancel in-flight requests on unmount
   useEffect(() => {
+    let ignore = false;
+    guidelinesApi
+      .getStats()
+      .then((stats) => {
+        if (!ignore) {
+          setGuidelineStats(stats);
+        }
+      })
+      .catch(() => {
+        // Backend may be booting
+      });
+
     return () => {
+      ignore = true;
       abortControllerRef.current?.abort();
     };
   }, []);
+
+  const handleGuidelinesUpdated = useCallback(() => {
+    fetchGuidelineStats();
+    // Invalidate last audit result since rules have changed
+    setAuditResult(null);
+    setLastAuditedDraft(null);
+    setFixedViolationIds(new Set());
+  }, [fetchGuidelineStats]);
 
   // Derived state (rerender-derived-state-no-effect)
   const isDirty =
@@ -152,6 +192,20 @@ export function AuditWorkspace() {
               ChromaDB Connected
             </span>
           </div>
+
+          <button
+            onClick={() => setIsGuidelineModalOpen(true)}
+            className="inline-flex items-center gap-2 rounded-md border border-neutral-800 bg-neutral-900/90 hover:bg-neutral-800/80 hover:border-neutral-700 px-2.5 py-1 text-xs text-neutral-200 transition-all active:scale-[0.98]"
+            title="Upload, view, or reset official brand guidelines in ChromaDB"
+          >
+            <SlidersHorizontal className="h-3.5 w-3.5 text-emerald-400" />
+            <span>Manage Guidelines</span>
+            {guidelineStats ? (
+              <span className="rounded bg-neutral-800 px-1.5 py-0.5 text-[10px] font-mono text-neutral-300">
+                {guidelineStats.total_chunks} chunks
+              </span>
+            ) : null}
+          </button>
         </div>
       </div>
 
@@ -178,6 +232,13 @@ export function AuditWorkspace() {
           className="lg:col-span-5 xl:col-span-5"
         />
       </div>
+
+      {/* Guideline Management Modal */}
+      <GuidelineModal
+        isOpen={isGuidelineModalOpen}
+        onClose={() => setIsGuidelineModalOpen(false)}
+        onGuidelinesUpdated={handleGuidelinesUpdated}
+      />
     </div>
   );
 }

@@ -59,6 +59,12 @@ export interface GuidelineUploadResponse {
 export interface GuidelineStatsResponse {
   total_chunks: number;
   status: string;
+  sources?: string[];
+}
+
+export interface GuidelineResetResponse {
+  message: string;
+  total_chunks: number;
 }
 
 export class ApiError extends Error {
@@ -150,6 +156,24 @@ export const guidelinesApi = {
       ...init,
     });
   },
+
+  reset: (init?: RequestInit): Promise<GuidelineResetResponse> =>
+    apiFetch<GuidelineResetResponse>("/guidelines/reset", {
+      method: "DELETE",
+      ...init,
+    }),
+
+  deleteFile: (
+    filename: string,
+    init?: RequestInit
+  ): Promise<GuidelineResetResponse> =>
+    apiFetch<GuidelineResetResponse>(
+      `/guidelines/file/${encodeURIComponent(filename)}`,
+      {
+        method: "DELETE",
+        ...init,
+      }
+    ),
 };
 
 /**
